@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>安伴星球</title>
+<style>
+:root {
+  --accent:#b8956a; --accent-light:#f5eeea; --accent-dark:#8b6d4a;
+  --text:#2e2c2a; --text2:#6b6863; --text3:#9a9792;
+  --border:#ddd9d2; --surface:#fdfcf9; --card:#faf8f4;
+  --orange:#b87a5a; --warm-pink:#c9a8a0; --warm-pink-light:#f5eeea;
+  --warm-green:#a3b5a1; --warm-green-light:#eef2ec;
+  --warm-blue:#a0afc0; --warm-blue-light:#edf0f4;
+  --warm-gold:#c4b188; --warm-gold-light:#f7f3e8;
+  --red:#c4541e;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;
+  background:#ffffff; display:flex; justify-content:center; align-items:center;
+  min-height:100vh; padding:12px; color:var(--text);
+}
+.app{
+  width:100%; max-width:390px; height:92vh; max-height:844px;
+  background:var(--surface); border-radius:24px; overflow:hidden;
+  box-shadow:0 4px 16px rgba(0,0,0,.10),0 12px 36px rgba(0,0,0,.08);
+  display:flex; flex-direction:column; position:relative;
+}
+.status-bar{
+  display:flex; justify-content:space-between; padding:8px 16px 4px;
+  font-size:11px; color:var(--text3); background:var(--card); flex-shrink:0;
+}
+/* Pages container */
+.pages{flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;}
+.page{display:none; padding:0 0 16px; min-height:100%}
+.page.active{display:block}
+
+/* Tab bar */
+.tab-bar{
+  display:flex; justify-content:space-around; padding:6px 4px 10px;
+  border-top:1px solid var(--border); background:var(--card); flex-shrink:0; font-size:10px;
+}
+.tab-item{display:flex; flex-direction:column; align-items:center; gap:2px; color:#b0ada7; cursor:pointer; transition:.2s; background:none; border:none; font-family:inherit; font-size:10px; padding:2px 6px}
+.tab-item.active{color:var(--accent)}
+.tab-item .tab-icon{font-size:20px}
+
+/* Top nav */
+.top-nav{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 16px; border-bottom:1px solid var(--border); background:var(--card);
+  position:sticky; top:0; z-index:10;
+}
+.top-nav .nav-back{font-size:16px; color:var(--text2); cursor:pointer; background:none; border:none; min-width:28px; text-align:left; font-family:inherit}
+.top-nav .nav-title{font-size:15px; font-weight:700}
+.top-nav .nav-action{font-size:14px; color:var(--text2); cursor:pointer; background:none; border:none; min-width:28px; text-align:right; font-family:inherit}
+
+/* Shared components */
+.slogan{text-align:center;font-size:13px;font-weight:600;color:var(--text2);font-style:italic;padding:6px 0}
+.section-label{font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px;padding:8px 0 4px}
+.section-label::before{content:'';width:3px;height:12px;background:var(--accent);border-radius:2px;flex-shrink:0}
+.content-pad{padding:12px 16px}
+
+.btn{
+  display:block; width:100%; padding:10px; border-radius:10px; font-size:13px; font-weight:600;
+  text-align:center; cursor:pointer; border:none; font-family:inherit; transition:.2s;
+}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:active{background:var(--accent-dark)}
+.btn-outline{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+.btn-outline:active{background:var(--accent-light)}
+
+.hero-card{
+  background:var(--warm-green-light); border:1px solid var(--warm-green); border-radius:10px;
+  padding:14px; text-align:center; margin:4px 0;
+}
+.hero-card h3{font-size:14px;font-weight:700;color:var(--accent-dark)}
+.hero-card p{font-size:11px;color:var(--text2);margin-top:3px}
+
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:10px;
+  padding:12px; margin:6px 0; box-shadow:0 1px 3px rgba(0,0,0,.03);
+}
+.card .card-title{font-size:13px;font-weight:700}
+.card .card-desc{font-size:10.5px;color:var(--text2);margin:3px 0}
+.card .card-meta{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.price{font-size:13px;font-weight:700;color:var(--orange)}
+.tag{display:inline-block;padding:4px 10px;border-radius:12px;font-size:10px;font-weight:600}
+.tag-accent{background:var(--accent);color:#fff}
+.tag-outline{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+
+.filter-row{display:flex;gap:6px;flex-wrap:wrap}
+.filter-pill{
+  padding:5px 12px;border-radius:14px;font-size:11px;cursor:pointer;
+  border:1px solid var(--border);background:var(--card);color:var(--text2);transition:.2s;
+}
+.filter-pill.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+.tier-row{display:flex;gap:8px;margin:6px 0}
+.tier-card{
+  flex:1;text-align:center;background:var(--card);border:2px solid var(--border);border-radius:10px;
+  padding:12px 6px;font-size:10px;cursor:pointer;transition:.2s;
+}
+.tier-card.sel{border-color:var(--accent);background:var(--accent-light)}
+.tier-card .t-icon{font-size:24px;display:block;margin-bottom:4px}
+.tier-card .t-price{font-size:12px;font-weight:700;color:var(--orange);margin-top:3px}
+
+.flow-strip{display:flex;justify-content:center;align-items:center;gap:6px;font-size:11px;color:var(--text2);padding:6px 0}
+.flow-strip .s-icon{font-size:20px;display:block;text-align:center}
+.flow-strip .arrow{color:var(--text3);font-size:10px}
+
+.shop-row{display:flex;gap:8px}
+.shop-item{
+  flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:10px;text-align:center;font-size:10px;cursor:pointer;transition:.2s;
+}
+.shop-item:active{background:var(--accent-light)}
+
+.progress-step{display:flex;align-items:center;gap:8px;font-size:11px;padding:4px 0}
+.dot{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+.dot-done{background:var(--accent);color:#fff}
+.dot-active{background:var(--accent);color:#fff}
+.dot-pending{background:#e8e4de;color:var(--text3)}
+.progress-bar{height:8px;background:#e8e4de;border-radius:4px;overflow:hidden;margin:4px 0}
+.progress-bar-fill{height:100%;background:var(--accent);border-radius:4px;transition:width 1s}
+
+.input-row{display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0}
+.input-row .label{width:56px;flex-shrink:0;color:var(--text2);text-align:right;font-size:11px}
+.input-row .value{flex:1;border-bottom:1px solid var(--border);padding:5px 4px;font-size:12px;background:transparent}
+.input-row .value:focus{outline:none;border-bottom-color:var(--accent)}
+input,select{font-family:inherit;font-size:12px;border:none;background:transparent;color:var(--text);width:100%}
+select{padding:4px 0;border-bottom:1px solid var(--border)}
+
+.check-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:3px 0}
+.check-row input[type=checkbox]{accent-color:var(--accent)}
+.divider{border-top:1px dashed var(--border);margin:6px 0}
+.total-row{text-align:right;font-weight:700;font-size:13px;color:var(--orange)}
+
+.profile-header{display:flex;align-items:center;gap:10px;padding:8px 0}
+.avatar{width:42px;height:42px;border-radius:50%;background:#e8e4de;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+
+.post-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;margin:5px 0;font-size:11px;
+}
+.post-card .post-body{color:var(--text2);font-style:italic;margin:4px 0}
+.post-card .post-meta{color:var(--text3);font-size:9px;display:flex;gap:10px}
+
+.reminder-card .r-date{font-size:11px;font-weight:600;color:var(--accent);margin:8px 0 4px}
+.reminder-card .r-event{background:var(--accent-light);border-radius:8px;padding:10px 12px;margin-bottom:4px}
+.reminder-card .r-event h4{font-size:12px;margin-bottom:3px}
+.reminder-card .r-event p{font-size:10px;color:var(--text2);font-style:italic;margin-bottom:6px}
+.btn-row{display:flex;gap:6px}
+.btn-sm{padding:5px 12px;border-radius:14px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--accent);background:#fff;color:var(--accent);transition:.2s}
+.btn-sm:active{background:var(--accent-light)}
+.btn-sm.filled{background:var(--accent);color:#fff}
+
+.vr-card{
+  background:linear-gradient(135deg,#e8ddf0,#d5ccdf);border-radius:12px;
+  padding:20px;text-align:center;border:1px solid #c8bcd4;margin:8px 0;
+}
+.vr-card h3{font-size:15px;font-weight:700;color:#5a4a6a;margin-bottom:8px}
+.vr-btn{display:inline-block;background:#7a6a8a;color:#fff;padding:7px 20px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer}
+
+.privacy-badge{
+  display:flex;align-items:center;gap:4px;font-size:9px;color:var(--text3);
+  justify-content:center;padding:6px 0;
+}
+.trust-strip{font-size:9px;color:var(--text3);text-align:center;padding:4px 0}
+
+.memento-row{
+  font-size:10px;display:flex;justify-content:space-between;align-items:center;
+  padding:6px 10px;background:var(--warm-gold-light);border-radius:6px;margin:3px 0;
+}
+
+.story-card{
+  background:var(--card);border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;font-size:10px;line-height:1.6;color:var(--text2);
+}
+.story-card .story-date{font-weight:600;color:var(--text);font-size:11px}
+
+.photo-grid{display:flex;gap:6px;flex-wrap:wrap}
+.photo-thumb{
+  width:52px;height:52px;background:#e8e4de;border-radius:5px;
+  display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text3);
+}
+
+.info-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:10px;margin:4px 0}
+
+.timeline-item{display:flex;gap:6px;font-size:10px;color:var(--text2);padding:3px 0}
+.timeline-item .tl-date{color:var(--text3);flex-shrink:0;font-size:9px;width:68px}
+
+.icon-grid{display:flex;gap:6px}
+.icon-cell{
+  flex:1;text-align:center;background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:10px 4px;font-size:10px;cursor:pointer;transition:.2s;
+}
+.icon-cell:active{background:var(--accent-light)}
+.icon-cell .ic{font-size:22px;display:block;margin-bottom:3px}
+
+.emergency-bar{
+  background:#fdf0ed;border:1px solid #f0c8b8;border-radius:8px;
+  padding:12px 14px;display:flex;align-items:center;justify-content:space-between;
+  font-weight:600;font-size:12px;color:var(--red);margin:6px 0;cursor:pointer;
+}
+.emergency-bar .call-btn{
+  background:#e8875b;color:#fff;padding:5px 14px;border-radius:14px;
+  font-size:11px;font-weight:700;
+}
+
+.alert-toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999;
+  background:#2e2c2a;color:#fff;padding:10px 24px;border-radius:20px;font-size:12px;
+  opacity:0;transition:opacity .3s;pointer-events:none;
+}
+.alert-toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <div id="toast" class="alert-toast"></div>
+
+  <!-- Status Bar -->
+  <div class="status-bar"><span>9:41</span><span id="pageTitle">安伴星球</span><span>📶 🔋</span></div>
+
+  <!-- Page Container -->
+  <div class="pages" id="pages">
+
+    <!-- ========== HOME ========== -->
+    <div class="page active" id="page-home">
+      <div class="content-pad">
+        <div style="text-align:center;padding:6px 0 2px"><img src="logo_透明.png" alt="安伴星球" style="height:36px" /></div>
+        <div class="slogan">"让每一次告别都体面而温暖"</div>
+        <div class="emergency-bar" onclick="toast('📞 正在呼叫服务团队...')">
+          <span>🆘 需要立即帮助</span><span class="call-btn">📞 一键呼叫</span>
+        </div>
+        <div class="hero-card">
+          <h3>🌱 生态降解 · 让生命回归自然</h3>
+          <p>无烟 · 无味 · 6-12个月无害化</p>
+        </div>
+        <div class="card" onclick="navigateTo('booking')">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:12px">💰 按体重估算服务费</span>
+            <select style="width:auto;font-size:11px" onclick="event.stopPropagation()">
+              <option>5kg以下</option><option>5-15kg</option><option>15-25kg</option>
+            </select>
+            <span class="price">¥399起</span>
+          </div>
+        </div>
+        <div class="section-label">选择告别方式</div>
+        <div class="tier-row">
+          <div class="tier-card sel" onclick="selectTier(this);navigateTo('booking')">
+            <span class="t-icon">🌱</span>极简<div class="t-price">¥399起</div><div style="font-size:9px;color:var(--text3)">降解+掩埋</div>
+          </div>
+          <div class="tier-card" onclick="selectTier(this);navigateTo('booking')">
+            <span class="t-icon">🕊️</span>温馨<div class="t-price">¥899起</div><div style="font-size:9px;color:var(--text3)">+告别仪式</div>
+          </div>
+          <div class="tier-card" onclick="selectTier(this);navigateTo('booking')">
+            <span class="t-icon">🌈</span>尊享<div class="t-price">¥1499起</div><div style="font-size:9px;color:var(--text3)">+全程策划</div>
+          </div>
+        </div>
+        <div class="section-label">生态降解流程</div>
+        <div class="flow-strip">
+          <span><span class="s-icon">🚗</span>接送</span><span class="arrow">→</span>
+          <span><span class="s-icon">🧼</span>清洁</span><span class="arrow">→</span>
+          <span><span class="s-icon">📦</span>封装</span><span class="arrow">→</span>
+          <span><span class="s-icon">🌳</span>回归</span>
+        </div>
+        <div class="section-label">纪念品商城</div>
+        <div class="shop-row">
+          <div class="shop-item" onclick="toast('🐾 爪印银饰 · ¥199起')"><span style="font-size:24px;display:block">🐾</span>爪印银饰<div style="font-weight:700;color:var(--orange);margin-top:3px">¥199起</div></div>
+          <div class="shop-item" onclick="toast('💎 骨灰晶石 · ¥259起')"><span style="font-size:24px;display:block">💎</span>骨灰晶石<div style="font-weight:700;color:var(--orange);margin-top:3px">¥259起</div></div>
+        </div>
+        <div class="trust-strip">✅ 承诺：单独降解 · 全程视频 · 可追溯</div>
+      </div>
+    </div>
+
+    <!-- ========== SERVICES ========== -->
+    <div class="page" id="page-services">
+      <div class="content-pad">
+        <div class="section-label">服务分类</div>
+        <div class="filter-row">
+          <span class="filter-pill on" onclick="filterPills(this)">全部</span>
+          <span class="filter-pill" onclick="filterPills(this)">生态降解</span>
+          <span class="filter-pill" onclick="filterPills(this)">告别</span>
+          <span class="filter-pill" onclick="filterPills(this)">纪念品</span>
+        </div>
+        <div class="card" onclick="navigateTo('booking')">
+          <div class="card-title">🌱 极简生态降解</div>
+          <div class="card-desc">接送+清洁+降解盒封装+掩埋</div>
+          <div style="font-size:9px;color:var(--text3)">5kg以下¥399 · 5-15kg¥499 · 15-25kg¥699</div>
+          <div class="card-meta"><span style="font-size:10px;color:var(--text2)">⏱6-12个月</span><span class="price">¥399起</span><span class="tag tag-accent">预约</span></div>
+        </div>
+        <div class="card" onclick="navigateTo('booking')">
+          <div class="card-title">🕊️ 温馨生态降解</div>
+          <div class="card-desc">极简服务 + 告别仪式（30分钟）</div>
+          <div class="card-meta"><span style="font-size:10px;color:var(--text2)">⏱6-12个月</span><span class="price">¥899起</span><span class="tag tag-accent">预约</span></div>
+        </div>
+        <div class="card" onclick="navigateTo('booking')">
+          <div class="card-title">🌈 尊享生态降解</div>
+          <div class="card-desc">温馨服务 + 全程策划+鲜花+视频</div>
+          <div class="card-meta"><span style="font-size:10px;color:var(--text2)">⏱6-12个月</span><span class="price">¥1499起</span><span class="tag tag-accent">预约</span></div>
+        </div>
+        <div class="card" onclick="toast('纪念品定制 · ¥199起')">
+          <div class="card-title">💎 纪念品定制</div>
+          <div class="card-desc">爪印银饰/骨灰晶石/3D模型</div>
+          <div class="card-meta"><span style="font-size:10px;color:var(--text2)">⏱3-7工作日</span><span class="price">¥199起</span><span class="tag tag-outline">定制</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== BOOKING FORM ========== -->
+    <div class="page" id="page-booking">
+      <div class="top-nav"><button class="nav-back" onclick="goBack()">←</button><span class="nav-title">预约生态降解服务</span><span></span></div>
+      <div class="content-pad">
+        <div class="section-label">1. 宠物信息</div>
+        <div class="input-row"><span class="label">名字</span><input placeholder="宠物的名字"></div>
+        <div class="input-row"><span class="label">品种</span><input placeholder="如：金毛犬"></div>
+        <div class="input-row"><span class="label">体重</span><select><option>5kg以下</option><option>5-15kg</option><option>15-25kg</option></select></div>
+        <div style="font-size:10px;color:var(--accent);padding:4px 0">📷 上传照片：[选择图片]</div>
+        <div class="section-label">2. 基础服务（必选）</div>
+        <div class="check-row"><label><input type="checkbox" checked onchange="updateTotal()"> 市区遗体接送</label><span>¥120</span></div>
+        <div class="check-row"><label><input type="checkbox" checked onchange="updateTotal()"> 遗体清洁与整理</label><span>¥150</span></div>
+        <div class="check-row"><label><input type="checkbox" checked onchange="updateTotal()"> 生态降解盒封装</label><span>¥180</span></div>
+        <div class="check-row"><label><input type="checkbox" checked onchange="updateTotal()"> 合规场地掩埋</label><span>¥100</span></div>
+        <div class="total-row" style="font-size:11px">基础服务小计：<span id="baseTotal">¥550</span></div>
+        <div class="section-label">3. 告别仪式（选配）</div>
+        <select onchange="updateTotal()"><option value="0">不举办</option><option value="200">简约告别 15min +¥200</option><option value="400" selected>标准告别 30min +¥400</option></select>
+        <div class="section-label">4. 纪念留存（选配）</div>
+        <div class="check-row"><label><input type="checkbox" checked onchange="updateTotal()"> 爪印银饰</label><span>+¥199</span></div>
+        <div class="check-row"><label><input type="checkbox" onchange="updateTotal()"> 骨灰晶石（树脂款）</label><span>+¥259</span></div>
+        <div class="check-row"><label><input type="checkbox" onchange="updateTotal()"> 纪念树苗</label><span>+¥150</span></div>
+        <div class="divider"></div>
+        <div class="total-row">📢 当前总计：<span id="grandTotal">¥1,129</span></div>
+        <div style="font-size:10px;display:flex;align-items:center;gap:4px;padding:4px 0">
+          <input type="checkbox" id="agree"> <label for="agree">已阅读并同意《服务协议》</label>
+        </div>
+        <button class="btn btn-accent" onclick="submitBooking()">确认预约 · 预付定金 ¥200</button>
+      </div>
+    </div>
+
+    <!-- ========== ORDER TRACKING ========== -->
+    <div class="page" id="page-tracking">
+      <div class="top-nav"><button class="nav-back" onclick="goBack()">←</button><span class="nav-title">订单跟踪</span><span style="font-size:10px;color:var(--text3)">AY20260716001</span></div>
+      <div class="content-pad">
+        <div style="font-size:11px;margin-bottom:8px"><strong>状态：</strong><span style="color:var(--accent);font-weight:600">🌱 降解中</span></div>
+        <div class="section-label">当前阶段</div>
+        <div class="progress-step"><span class="dot dot-done">✓</span>接送 ✅ → 清洁 ✅ → 封装 ✅</div>
+        <div class="progress-step"><span class="dot dot-active">●</span>🌱 降解中... 预计8个月完成</div>
+        <div class="progress-step"><span class="dot dot-pending">○</span>🌳 回归自然（土壤交付）</div>
+        <div class="section-label">降解进度</div>
+        <div class="progress-bar"><div class="progress-bar-fill" style="width:30%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text2)"><span>30%</span><span>预计剩余：5个月</span></div>
+        <div class="info-card">
+          <div style="font-weight:600;font-size:11px">📦 降解盒状态</div>
+          <div style="font-size:10px">位置：安伴星球生态降解基地</div>
+          <div style="font-size:10px">掩埋：2026.07.16 · 预计：2027.03.16</div>
+        </div>
+        <div class="info-card">
+          <div style="font-weight:600;font-size:11px">🎥 全程视频存证（加密）</div>
+          <div style="font-size:10px">已录制：接送→清洁→封装→掩埋</div>
+          <div style="color:var(--accent);cursor:pointer;font-size:10px" onclick="toast('🔒 正在验证区块链存证...\n存证号：0x7f9a8b3c...\n验证通过 ✓')">[点击查看]</div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);padding:4px 0">🔒 区块链存证号：0x7f9a...</div>
+        <div class="section-label">费用明细</div>
+        <div style="font-size:10px">基础¥550 + 仪式¥400 + 银饰¥199 = <strong>¥1,129</strong></div>
+      </div>
+    </div>
+
+    <!-- ========== MEMORIAL SPACE ========== -->
+    <div class="page" id="page-memorial">
+      <div class="content-pad">
+        <div class="profile-header">
+          <div class="avatar">🐾</div>
+          <div><div style="font-weight:700;font-size:14px">团团</div><div style="font-size:10px;color:var(--text2)">🌈 2020.03.15 - 2026.07.14</div></div>
+        </div>
+        <div class="rainbow-text" style="text-align:center;color:var(--accent);font-style:italic;font-size:11px;padding:4px 0">🌈 谢谢你陪我走过的每一天</div>
+        <div class="section-label">生命故事</div>
+        <div class="story-card">
+          <div class="story-date">2020.03.15</div>
+          <div>第一次来到家里，小小的你躲在沙发后面不敢出来...</div>
+          <div style="color:var(--accent);text-align:right;cursor:pointer" onclick="toast('展开全文...')">[展开阅读]</div>
+        </div>
+        <div class="section-label">降解状态</div>
+        <div style="font-size:10px;color:var(--text2)">🌱 正在自然降解中...</div>
+        <div class="progress-bar"><div class="progress-bar-fill" style="width:30%"></div></div>
+        <div style="font-size:10px;color:var(--text2)">已降解 30% · 预计2027.03完成</div>
+        <div class="section-label">影像记忆</div>
+        <div class="photo-grid">
+          <div class="photo-thumb">📷</div><div class="photo-thumb">📷</div><div class="photo-thumb">📷</div><div class="photo-thumb">📷</div>
+          <div class="photo-thumb">📷</div><div class="photo-thumb" style="border:1px dashed var(--border);background:transparent;cursor:pointer" onclick="toast('上传照片')">+</div>
+        </div>
+        <div class="section-label">纪念日提醒</div>
+        <div class="reminder-card">
+          <div class="r-date">📅 2026-08-13</div>
+          <div class="r-event"><h4>🌈 团团离开30天</h4><p>"今天是团团的离开日，你想对它说些什么？"</p><div class="btn-row"><span class="btn-sm" onclick="toast('✉️ 写信功能')">✉️ 写一封信</span><span class="btn-sm" onclick="toast('🕯️ 已点亮')">🕯️ 点一盏灯</span></div></div>
+          <div class="r-date">📅 2027-07-14</div>
+          <div class="r-event"><h4>🌈 团团离开一周年</h4><div class="btn-row"><span class="btn-sm filled" onclick="toast('纪念日策划中...')">🕊️ 纪念日策划</span></div></div>
+        </div>
+        <div class="section-label">纪念品</div>
+        <div class="memento-row"><span>💎 骨灰晶石 已定制</span><span style="color:var(--accent);cursor:pointer">[查看]</span></div>
+        <div class="memento-row"><span>🐾 爪印银饰 已定制</span><span style="color:var(--accent);cursor:pointer">[查看]</span></div>
+        <div class="section-label">VR纪念空间</div>
+        <div class="vr-card" onclick="toast('🥽 正在加载VR纪念空间...')">
+          <h3>🌈 彩虹桥纪念空间</h3>
+          <div style="font-size:32px;margin:6px 0">🌳🐾✨</div>
+          <span class="vr-btn">🥽 点击进入VR</span>
+        </div>
+        <div class="privacy-badge">🔒 云端永久存储 · 访问密码保护</div>
+      </div>
+    </div>
+
+    <!-- ========== COMMUNITY ========== -->
+    <div class="page" id="page-community">
+      <div class="content-pad">
+        <div class="section-label">话题分类</div>
+        <div class="filter-row">
+          <span class="filter-pill on" onclick="filterPills(this)">全部</span>
+          <span class="filter-pill" onclick="filterPills(this)">思念</span>
+          <span class="filter-pill" onclick="filterPills(this)">分享</span>
+          <span class="filter-pill" onclick="filterPills(this)">互助</span>
+        </div>
+        <div class="post-card">
+          <div style="font-weight:600;font-size:11px">💬 用户***</div>
+          <div class="post-body">"选择了生态降解，让它回归自然，感觉它从未真正离开"</div>
+          <div class="post-meta">⏱2小时前 · ❤️128 · 💬23</div>
+        </div>
+        <div class="post-card">
+          <div style="font-weight:600;font-size:11px">💬 用户***</div>
+          <div class="post-body">"¥399的极简降解，服务很专业，很安心"</div>
+          <div class="post-meta">⏱5小时前 · ❤️89 · 💬15</div>
+        </div>
+        <div class="post-card">
+          <div style="font-weight:600;font-size:11px">📖 科普知识</div>
+          <div class="post-body">"生态降解6个月后发生了什么？一文看懂全过程"</div>
+          <div class="post-meta">⏱1天前 · 👁️345</div>
+        </div>
+        <button class="btn btn-accent" style="margin-top:8px" onclick="toast('发布动态')">✏️ 发布动态</button>
+      </div>
+    </div>
+
+    <!-- ========== MY PROFILE ========== -->
+    <div class="page" id="page-profile">
+      <div class="content-pad">
+        <div class="profile-header">
+          <div class="avatar">👤</div>
+          <div><div style="font-weight:700;font-size:14px">用户名</div><div style="font-size:10px;color:var(--text2)">会员等级</div></div>
+        </div>
+        <div class="icon-grid">
+          <div class="icon-cell" onclick="switchTab('services')"><span class="ic">📋</span>订单管理</div>
+          <div class="icon-cell" onclick="switchTab('memorial')"><span class="ic">💎</span>纪念空间</div>
+          <div class="icon-cell" onclick="toast('收藏')"><span class="ic">⭐</span>收藏</div>
+        </div>
+        <div class="section-label">近期订单</div>
+        <div class="card" onclick="navigateTo('tracking')">
+          <div style="font-size:9px;color:var(--text3)">2026-07-16</div>
+          <div style="font-weight:600;font-size:12px">温馨生态降解</div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:4px">
+            <span>🌱 降解中 (30%)</span><span style="font-weight:700">¥1,129</span><span style="color:var(--accent)">[详情]</span>
+          </div>
+        </div>
+        <div class="section-label">我的纪念空间</div>
+        <div style="font-size:11px;padding:4px 0">🐾 团团（金毛）🌱 降解中</div>
+        <div style="font-size:11px;color:var(--accent);cursor:pointer" onclick="switchTab('memorial')">[+ 创建新的纪念空间]</div>
+        <div class="section-label">客服与设置</div>
+        <div style="font-size:11px;display:flex;gap:16px;color:var(--text2);padding:4px 0">
+          <span style="cursor:pointer" onclick="toast('📞 在线客服接入中...')">📞 客服</span>
+          <span style="cursor:pointer" onclick="toast('📖 帮助中心')">📖 帮助</span>
+          <span style="cursor:pointer" onclick="toast('⚙️ 设置')">⚙️ 设置</span>
+        </div>
+        <div class="privacy-badge">🔒 云端永久存储 · 隐私保护</div>
+      </div>
+    </div>
+
+  </div><!-- /pages -->
+
+  <!-- Tab Bar -->
+  <div class="tab-bar" id="tabBar">
+    <button class="tab-item active" data-tab="home" onclick="switchTab('home')"><span class="tab-icon">🏠</span>首页</button>
+    <button class="tab-item" data-tab="services" onclick="switchTab('services')"><span class="tab-icon">📋</span>服务</button>
+    <button class="tab-item" data-tab="memorial" onclick="switchTab('memorial')"><span class="tab-icon">💎</span>纪念</button>
+    <button class="tab-item" data-tab="community" onclick="switchTab('community')"><span class="tab-icon">💬</span>社区</button>
+    <button class="tab-item" data-tab="profile" onclick="switchTab('profile')"><span class="tab-icon">👤</span>我的</button>
+  </div>
+</div>
+
+<script>
+// Tab switching
+const pages = {home:'page-home',services:'page-services',memorial:'page-memorial',community:'page-community',profile:'page-profile'};
+const subtitles = {home:'安伴星球',services:'服务',memorial:'纪念空间',community:'社区',profile:'个人中心'};
+let currentTab = 'home';
+let navStack = [];
+
+function switchTab(tab){
+  if(tab === currentTab && navStack.length === 0) return;
+  navStack = [];
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pid = pages[tab];
+  if(pid) document.getElementById(pid).classList.add('active');
+  document.querySelectorAll('#tabBar .tab-item').forEach(b=>b.classList.remove('active'));
+  const btn = document.querySelector(`[data-tab="${tab}"]`);
+  if(btn) btn.classList.add('active');
+  document.getElementById('pageTitle').textContent = subtitles[tab] || tab;
+  currentTab = tab;
+  document.getElementById('pages').scrollTop = 0;
+}
+
+function navigateTo(page){
+  navStack.push(currentTab);
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const map = {booking:'page-booking',tracking:'page-tracking'};
+  const pid = map[page];
+  if(pid) document.getElementById(pid).classList.add('active');
+  document.getElementById('pageTitle').textContent = page==='booking'?'预约服务':'订单跟踪';
+  document.getElementById('pages').scrollTop = 0;
+}
+
+function goBack(){
+  if(navStack.length > 0){
+    switchTab(navStack.pop());
+  }
+}
+
+// Filter pills
+function filterPills(el){
+  el.parentElement.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+}
+
+// Tier selection
+function selectTier(el){
+  el.parentElement.querySelectorAll('.tier-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+// Booking total calculator
+function updateTotal(){
+  const checks = document.querySelectorAll('#page-booking .check-row input[type=checkbox]');
+  let base = 0, extras = 0;
+  checks.forEach((cb,i)=>{
+    if(cb.checked){
+      const v = [120,150,180,100,199,259,150][i];
+      if(i<4) base += v; else extras += v;
+    }
+  });
+  const ceremony = document.querySelector('#page-booking select')?.value || '0';
+  const ceremonyVal = parseInt(ceremony) || 0;
+  document.getElementById('baseTotal').textContent = '¥'+base;
+  document.getElementById('grandTotal').textContent = '¥'+(base+ceremonyVal+extras);
+}
+
+function submitBooking(){
+  if(!document.getElementById('agree').checked){
+    toast('请先阅读并同意《服务协议》');
+    return;
+  }
+  toast('✅ 预约成功！订单号：AY'+Date.now().toString(36).toUpperCase());
+  setTimeout(()=>navigateTo('tracking'),1500);
+}
+
+// Toast
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'),2000);
+}
+
+// Init
+updateTotal();
+</script>
+</body>
+</html>

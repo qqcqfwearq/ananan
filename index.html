@@ -18,7 +18,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{
   font-family:-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;
-  background:#ffffff; display:flex; justify-content:center; align-items:center;
+  background:#f0ede8; display:flex; justify-content:center; align-items:center;
   min-height:100vh; padding:12px; color:var(--text);
 }
 .app{
@@ -31,56 +31,120 @@ body{
   display:flex; justify-content:space-between; padding:8px 16px 4px;
   font-size:11px; color:var(--text3); background:var(--card); flex-shrink:0;
 }
-/* Pages container */
-.pages{flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;}
-.page{display:none; padding:0 0 16px; min-height:100%}
-.page.active{display:block}
 
-/* Tab bar */
+/* ===== PAGE CONTAINER & TRANSITIONS ===== */
+.pages{
+  flex:1; position:relative; overflow:hidden;
+  -webkit-overflow-scrolling:touch;
+}
+.page{
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  overflow-y:auto; overflow-x:hidden; padding:0 0 16px;
+  opacity:0; transform:translateX(30px);
+  transition:transform .32s cubic-bezier(.4,0,.2,1), opacity .24s ease;
+  pointer-events:none; z-index:0;
+}
+.page.active{
+  opacity:1; transform:translateX(0);
+  pointer-events:auto; z-index:2;
+}
+.page.exit-forward{
+  opacity:0; transform:translateX(-40px);
+  z-index:1; pointer-events:none;
+}
+.page.exit-backward{
+  opacity:0; transform:translateX(40px);
+  z-index:1; pointer-events:none;
+}
+.page.enter-forward{
+  opacity:0; transform:translateX(60px);
+}
+.page.enter-forward.active{
+  opacity:1; transform:translateX(0);
+}
+.page.enter-backward{
+  opacity:0; transform:translateX(-60px);
+}
+.page.enter-backward.active{
+  opacity:1; transform:translateX(0);
+}
+
+/* ===== TAB BAR ===== */
 .tab-bar{
   display:flex; justify-content:space-around; padding:6px 4px 10px;
   border-top:1px solid var(--border); background:var(--card); flex-shrink:0; font-size:10px;
+  position:relative;
 }
-.tab-item{display:flex; flex-direction:column; align-items:center; gap:2px; color:#b0ada7; cursor:pointer; transition:.2s; background:none; border:none; font-family:inherit; font-size:10px; padding:2px 6px}
-.tab-item.active{color:var(--accent)}
-.tab-item .tab-icon{font-size:20px}
+.tab-item{
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  color:#b0ada7; cursor:pointer; transition:color .25s, transform .2s;
+  background:none; border:none; font-family:inherit; font-size:10px; padding:2px 6px;
+  position:relative;
+}
+.tab-item.active{color:var(--accent); transform:translateY(-1px)}
+.tab-item .tab-icon{font-size:20px; transition:transform .25s}
+.tab-item.active .tab-icon{transform:scale(1.12)}
+.tab-item::after{
+  content:''; position:absolute; bottom:-5px; width:4px; height:4px;
+  border-radius:50%; background:var(--accent); opacity:0; transform:scale(0);
+  transition:opacity .25s, transform .25s;
+}
+.tab-item.active::after{opacity:1; transform:scale(1)}
 
-/* Top nav */
+/* ===== TOP NAV ===== */
 .top-nav{
   display:flex; justify-content:space-between; align-items:center;
   padding:10px 16px; border-bottom:1px solid var(--border); background:var(--card);
   position:sticky; top:0; z-index:10;
 }
-.top-nav .nav-back{font-size:16px; color:var(--text2); cursor:pointer; background:none; border:none; min-width:28px; text-align:left; font-family:inherit}
+.top-nav .nav-back{
+  font-size:18px; color:var(--text2); cursor:pointer; background:none; border:none;
+  min-width:32px; text-align:left; font-family:inherit; padding:4px 0;
+  transition:color .2s, transform .2s;
+}
+.top-nav .nav-back:active{color:var(--accent); transform:scale(.9)}
 .top-nav .nav-title{font-size:15px; font-weight:700}
 .top-nav .nav-action{font-size:14px; color:var(--text2); cursor:pointer; background:none; border:none; min-width:28px; text-align:right; font-family:inherit}
 
-/* Shared components */
+/* ===== SHARED COMPONENTS ===== */
 .slogan{text-align:center;font-size:13px;font-weight:600;color:var(--text2);font-style:italic;padding:6px 0}
 .section-label{font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px;padding:8px 0 4px}
 .section-label::before{content:'';width:3px;height:12px;background:var(--accent);border-radius:2px;flex-shrink:0}
 .content-pad{padding:12px 16px}
 
 .btn{
-  display:block; width:100%; padding:10px; border-radius:10px; font-size:13px; font-weight:600;
-  text-align:center; cursor:pointer; border:none; font-family:inherit; transition:.2s;
+  display:block; width:100%; padding:11px; border-radius:10px; font-size:13px; font-weight:600;
+  text-align:center; cursor:pointer; border:none; font-family:inherit;
+  transition:background .2s, transform .15s, box-shadow .2s;
+  position:relative; overflow:hidden;
 }
-.btn-accent{background:var(--accent);color:#fff}
-.btn-accent:active{background:var(--accent-dark)}
+.btn:active{transform:scale(.97)}
+.btn-accent{background:var(--accent);color:#fff; box-shadow:0 2px 8px rgba(184,149,106,.3)}
+.btn-accent:active{background:var(--accent-dark); box-shadow:0 1px 4px rgba(184,149,106,.2)}
 .btn-outline{background:#fff;color:var(--accent);border:1px solid var(--accent)}
 .btn-outline:active{background:var(--accent-light)}
+
+/* Ripple */
+.btn::after{
+  content:''; position:absolute; top:50%; left:50%; width:0; height:0;
+  border-radius:50%; background:rgba(255,255,255,.3); transform:translate(-50%,-50%);
+  transition:width .6s, height .6s;
+}
+.btn:active::after{width:300px; height:300px}
 
 .hero-card{
   background:var(--warm-green-light); border:1px solid var(--warm-green); border-radius:10px;
   padding:14px; text-align:center; margin:4px 0;
+  transition:transform .2s, box-shadow .2s;
 }
-.hero-card h3{font-size:14px;font-weight:700;color:var(--accent-dark)}
-.hero-card p{font-size:11px;color:var(--text2);margin-top:3px}
+.hero-card:active{transform:scale(.98)}
 
 .card{
   background:var(--card); border:1px solid var(--border); border-radius:10px;
   padding:12px; margin:6px 0; box-shadow:0 1px 3px rgba(0,0,0,.03);
+  cursor:pointer; transition:transform .18s, box-shadow .18s, border-color .18s;
 }
+.card:active{transform:scale(.98); box-shadow:0 2px 8px rgba(0,0,0,.06); border-color:var(--accent)}
 .card .card-title{font-size:13px;font-weight:700}
 .card .card-desc{font-size:10.5px;color:var(--text2);margin:3px 0}
 .card .card-meta{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
@@ -92,17 +156,22 @@ body{
 .filter-row{display:flex;gap:6px;flex-wrap:wrap}
 .filter-pill{
   padding:5px 12px;border-radius:14px;font-size:11px;cursor:pointer;
-  border:1px solid var(--border);background:var(--card);color:var(--text2);transition:.2s;
+  border:1px solid var(--border);background:var(--card);color:var(--text2);
+  transition:all .25s; user-select:none;
 }
-.filter-pill.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.filter-pill:active{transform:scale(.94)}
+.filter-pill.on{background:var(--accent);color:#fff;border-color:var(--accent); box-shadow:0 2px 6px rgba(184,149,106,.25)}
 
 .tier-row{display:flex;gap:8px;margin:6px 0}
 .tier-card{
   flex:1;text-align:center;background:var(--card);border:2px solid var(--border);border-radius:10px;
-  padding:12px 6px;font-size:10px;cursor:pointer;transition:.2s;
+  padding:12px 6px;font-size:10px;cursor:pointer;
+  transition:all .25s; user-select:none;
 }
-.tier-card.sel{border-color:var(--accent);background:var(--accent-light)}
-.tier-card .t-icon{font-size:24px;display:block;margin-bottom:4px}
+.tier-card:active{transform:scale(.95)}
+.tier-card.sel{border-color:var(--accent);background:var(--accent-light); box-shadow:0 2px 10px rgba(184,149,106,.15)}
+.tier-card .t-icon{font-size:24px;display:block;margin-bottom:4px; transition:transform .25s}
+.tier-card.sel .t-icon{transform:scale(1.15)}
 .tier-card .t-price{font-size:12px;font-weight:700;color:var(--orange);margin-top:3px}
 
 .flow-strip{display:flex;justify-content:center;align-items:center;gap:6px;font-size:11px;color:var(--text2);padding:6px 0}
@@ -112,37 +181,45 @@ body{
 .shop-row{display:flex;gap:8px}
 .shop-item{
   flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;
-  padding:10px;text-align:center;font-size:10px;cursor:pointer;transition:.2s;
+  padding:10px;text-align:center;font-size:10px;cursor:pointer;
+  transition:all .25s; user-select:none;
 }
-.shop-item:active{background:var(--accent-light)}
+.shop-item:active{transform:scale(.95); background:var(--accent-light); border-color:var(--accent)}
 
 .progress-step{display:flex;align-items:center;gap:8px;font-size:11px;padding:4px 0}
 .dot{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
 .dot-done{background:var(--accent);color:#fff}
-.dot-active{background:var(--accent);color:#fff}
+.dot-active{background:var(--accent);color:#fff; animation:pulse 2s infinite}
 .dot-pending{background:#e8e4de;color:var(--text3)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(184,149,106,.4)}50%{box-shadow:0 0 0 6px rgba(184,149,106,0)}}
 .progress-bar{height:8px;background:#e8e4de;border-radius:4px;overflow:hidden;margin:4px 0}
-.progress-bar-fill{height:100%;background:var(--accent);border-radius:4px;transition:width 1s}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-dark));border-radius:4px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
 
 .input-row{display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0}
 .input-row .label{width:56px;flex-shrink:0;color:var(--text2);text-align:right;font-size:11px}
 .input-row .value{flex:1;border-bottom:1px solid var(--border);padding:5px 4px;font-size:12px;background:transparent}
 .input-row .value:focus{outline:none;border-bottom-color:var(--accent)}
 input,select{font-family:inherit;font-size:12px;border:none;background:transparent;color:var(--text);width:100%}
-select{padding:4px 0;border-bottom:1px solid var(--border)}
+select{padding:4px 0;border-bottom:1px solid var(--border); cursor:pointer}
 
-.check-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:3px 0}
-.check-row input[type=checkbox]{accent-color:var(--accent)}
+.check-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:4px 0; cursor:pointer}
+.check-row input[type=checkbox]{accent-color:var(--accent); width:15px; height:15px; cursor:pointer}
 .divider{border-top:1px dashed var(--border);margin:6px 0}
-.total-row{text-align:right;font-weight:700;font-size:13px;color:var(--orange)}
+.total-row{text-align:right;font-weight:700;font-size:14px;color:var(--orange); padding:6px 0}
 
 .profile-header{display:flex;align-items:center;gap:10px;padding:8px 0}
-.avatar{width:42px;height:42px;border-radius:50%;background:#e8e4de;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.avatar{
+  width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#e8e4de,#d5cfc7);
+  display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;
+  box-shadow:0 2px 6px rgba(0,0,0,.06);
+}
 
 .post-card{
   background:var(--surface);border:1px solid var(--border);border-radius:8px;
-  padding:10px 12px;margin:5px 0;font-size:11px;
+  padding:10px 12px;margin:5px 0;font-size:11px; cursor:pointer;
+  transition:transform .18s, box-shadow .18s;
 }
+.post-card:active{transform:scale(.98); box-shadow:0 2px 8px rgba(0,0,0,.05)}
 .post-card .post-body{color:var(--text2);font-style:italic;margin:4px 0}
 .post-card .post-meta{color:var(--text3);font-size:9px;display:flex;gap:10px}
 
@@ -151,16 +228,35 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
 .reminder-card .r-event h4{font-size:12px;margin-bottom:3px}
 .reminder-card .r-event p{font-size:10px;color:var(--text2);font-style:italic;margin-bottom:6px}
 .btn-row{display:flex;gap:6px}
-.btn-sm{padding:5px 12px;border-radius:14px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--accent);background:#fff;color:var(--accent);transition:.2s}
-.btn-sm:active{background:var(--accent-light)}
+.btn-sm{
+  padding:5px 12px;border-radius:14px;font-size:10px;font-weight:600;cursor:pointer;
+  border:1px solid var(--accent);background:#fff;color:var(--accent);
+  transition:all .2s; user-select:none;
+}
+.btn-sm:active{transform:scale(.94); background:var(--accent-light)}
 .btn-sm.filled{background:var(--accent);color:#fff}
+.btn-sm.filled:active{background:var(--accent-dark)}
 
 .vr-card{
   background:linear-gradient(135deg,#e8ddf0,#d5ccdf);border-radius:12px;
   padding:20px;text-align:center;border:1px solid #c8bcd4;margin:8px 0;
+  cursor:pointer; transition:transform .25s, box-shadow .25s;
+  position:relative; overflow:hidden;
 }
-.vr-card h3{font-size:15px;font-weight:700;color:#5a4a6a;margin-bottom:8px}
-.vr-btn{display:inline-block;background:#7a6a8a;color:#fff;padding:7px 20px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer}
+.vr-card::before{
+  content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%;
+  background:radial-gradient(circle, rgba(255,255,255,.2) 0%, transparent 60%);
+  opacity:0; transition:opacity .4s;
+}
+.vr-card:active{transform:scale(.97); box-shadow:0 4px 16px rgba(90,74,106,.2)}
+.vr-card:active::before{opacity:1}
+.vr-card h3{font-size:15px;font-weight:700;color:#5a4a6a;margin-bottom:8px; position:relative; z-index:1}
+.vr-btn{
+  display:inline-block;background:#7a6a8a;color:#fff;padding:7px 20px;border-radius:16px;
+  font-size:11px;font-weight:600;cursor:pointer; transition:transform .2s, background .2s;
+  position:relative; z-index:1;
+}
+.vr-btn:active{transform:scale(.93); background:#6a5a7a}
 
 .privacy-badge{
   display:flex;align-items:center;gap:4px;font-size:9px;color:var(--text3);
@@ -171,7 +267,9 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
 .memento-row{
   font-size:10px;display:flex;justify-content:space-between;align-items:center;
   padding:6px 10px;background:var(--warm-gold-light);border-radius:6px;margin:3px 0;
+  cursor:pointer; transition:transform .18s, background .18s;
 }
+.memento-row:active{transform:scale(.98); background:var(--warm-gold-light)}
 
 .story-card{
   background:var(--card);border:1px solid var(--border);border-radius:8px;
@@ -181,39 +279,57 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
 
 .photo-grid{display:flex;gap:6px;flex-wrap:wrap}
 .photo-thumb{
-  width:52px;height:52px;background:#e8e4de;border-radius:5px;
+  width:52px;height:52px;background:#e8e4de;border-radius:6px;
   display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text3);
+  cursor:pointer; transition:transform .2s, background .2s;
 }
+.photo-thumb:active{transform:scale(.9); background:#ddd9d2}
 
-.info-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:10px;margin:4px 0}
-
-.timeline-item{display:flex;gap:6px;font-size:10px;color:var(--text2);padding:3px 0}
-.timeline-item .tl-date{color:var(--text3);flex-shrink:0;font-size:9px;width:68px}
+.info-card{
+  background:var(--card);border:1px solid var(--border);border-radius:8px;
+  padding:10px;font-size:10px;margin:4px 0; transition:transform .18s;
+}
+.info-card:active{transform:scale(.99)}
 
 .icon-grid{display:flex;gap:6px}
 .icon-cell{
   flex:1;text-align:center;background:var(--card);border:1px solid var(--border);
-  border-radius:8px;padding:10px 4px;font-size:10px;cursor:pointer;transition:.2s;
+  border-radius:8px;padding:12px 4px;font-size:10px;cursor:pointer;
+  transition:all .25s; user-select:none;
 }
-.icon-cell:active{background:var(--accent-light)}
-.icon-cell .ic{font-size:22px;display:block;margin-bottom:3px}
+.icon-cell:active{transform:scale(.93); background:var(--accent-light); border-color:var(--accent)}
+.icon-cell .ic{font-size:24px;display:block;margin-bottom:4px; transition:transform .25s}
+.icon-cell:active .ic{transform:scale(1.2)}
 
 .emergency-bar{
-  background:#fdf0ed;border:1px solid #f0c8b8;border-radius:8px;
+  background:linear-gradient(135deg,#fdf0ed,#fbe8e0);border:1px solid #f0c8b8;border-radius:8px;
   padding:12px 14px;display:flex;align-items:center;justify-content:space-between;
   font-weight:600;font-size:12px;color:var(--red);margin:6px 0;cursor:pointer;
+  transition:transform .2s, box-shadow .2s;
+  animation:emergency-pulse 3s infinite;
 }
+@keyframes emergency-pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(196,84,30,.15)}
+  50%{box-shadow:0 0 0 8px rgba(196,84,30,0)}
+}
+.emergency-bar:active{transform:scale(.97)}
 .emergency-bar .call-btn{
-  background:#e8875b;color:#fff;padding:5px 14px;border-radius:14px;
-  font-size:11px;font-weight:700;
+  background:linear-gradient(135deg,#e8875b,#d4724a);color:#fff;padding:6px 16px;border-radius:14px;
+  font-size:11px;font-weight:700; transition:transform .2s;
 }
+.emergency-bar:active .call-btn{transform:scale(.92)}
 
+/* ===== TOAST ===== */
 .alert-toast{
-  position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999;
-  background:#2e2c2a;color:#fff;padding:10px 24px;border-radius:20px;font-size:12px;
-  opacity:0;transition:opacity .3s;pointer-events:none;
+  position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-20px);z-index:9999;
+  background:rgba(46,44,42,.92);color:#fff;padding:12px 28px;border-radius:24px;
+  font-size:13px; font-weight:500; letter-spacing:.3px;
+  opacity:0; transition:all .35s cubic-bezier(.4,0,.2,1);
+  pointer-events:none; white-space:pre-line; text-align:center;
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  max-width:85vw; box-shadow:0 8px 24px rgba(0,0,0,.25);
 }
-.alert-toast.show{opacity:1}
+.alert-toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
@@ -228,11 +344,11 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
   <div class="pages" id="pages">
 
     <!-- ========== HOME ========== -->
-    <div class="page active" id="page-home">
+    <div class="page active" id="page-home" data-tab="home">
       <div class="content-pad">
-        <div style="text-align:center;padding:6px 0 2px"><img src="logo_透明.png" alt="安伴星球" style="height:36px" /></div>
+        <div style="text-align:center;padding:8px 0 4px"><img src="logo_透明.png" alt="安伴星球" style="height:38px" /></div>
         <div class="slogan">"让每一次告别都体面而温暖"</div>
-        <div class="emergency-bar" onclick="toast('📞 正在呼叫服务团队...')">
+        <div class="emergency-bar" onclick="toast('📞 正在呼叫服务团队...\n专属顾问将在30秒内响应')">
           <span>🆘 需要立即帮助</span><span class="call-btn">📞 一键呼叫</span>
         </div>
         <div class="hero-card">
@@ -269,15 +385,15 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
         </div>
         <div class="section-label">纪念品商城</div>
         <div class="shop-row">
-          <div class="shop-item" onclick="toast('🐾 爪印银饰 · ¥199起')"><span style="font-size:24px;display:block">🐾</span>爪印银饰<div style="font-weight:700;color:var(--orange);margin-top:3px">¥199起</div></div>
-          <div class="shop-item" onclick="toast('💎 骨灰晶石 · ¥259起')"><span style="font-size:24px;display:block">💎</span>骨灰晶石<div style="font-weight:700;color:var(--orange);margin-top:3px">¥259起</div></div>
+          <div class="shop-item" onclick="toast('🐾 爪印银饰 · ¥199起\n纯银打造，留下永恒的印记')"><span style="font-size:28px;display:block;margin-bottom:2px">🐾</span>爪印银饰<div style="font-weight:700;color:var(--orange);margin-top:3px">¥199起</div></div>
+          <div class="shop-item" onclick="toast('💎 骨灰晶石 · ¥259起\n将思念凝结为永恒的光芒')"><span style="font-size:28px;display:block;margin-bottom:2px">💎</span>骨灰晶石<div style="font-weight:700;color:var(--orange);margin-top:3px">¥259起</div></div>
         </div>
         <div class="trust-strip">✅ 承诺：单独降解 · 全程视频 · 可追溯</div>
       </div>
     </div>
 
     <!-- ========== SERVICES ========== -->
-    <div class="page" id="page-services">
+    <div class="page" id="page-services" data-tab="services">
       <div class="content-pad">
         <div class="section-label">服务分类</div>
         <div class="filter-row">
@@ -302,7 +418,7 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
           <div class="card-desc">温馨服务 + 全程策划+鲜花+视频</div>
           <div class="card-meta"><span style="font-size:10px;color:var(--text2)">⏱6-12个月</span><span class="price">¥1499起</span><span class="tag tag-accent">预约</span></div>
         </div>
-        <div class="card" onclick="toast('纪念品定制 · ¥199起')">
+        <div class="card" onclick="toast('💎 纪念品定制 · ¥199起\n爪印银饰 / 骨灰晶石 / 3D模型\n3-7个工作日交付')">
           <div class="card-title">💎 纪念品定制</div>
           <div class="card-desc">爪印银饰/骨灰晶石/3D模型</div>
           <div class="card-meta"><span style="font-size:10px;color:var(--text2)">⏱3-7工作日</span><span class="price">¥199起</span><span class="tag tag-outline">定制</span></div>
@@ -311,14 +427,14 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
     </div>
 
     <!-- ========== BOOKING FORM ========== -->
-    <div class="page" id="page-booking">
+    <div class="page" id="page-booking" data-tab="">
       <div class="top-nav"><button class="nav-back" onclick="goBack()">←</button><span class="nav-title">预约生态降解服务</span><span></span></div>
       <div class="content-pad">
         <div class="section-label">1. 宠物信息</div>
         <div class="input-row"><span class="label">名字</span><input placeholder="宠物的名字"></div>
         <div class="input-row"><span class="label">品种</span><input placeholder="如：金毛犬"></div>
         <div class="input-row"><span class="label">体重</span><select><option>5kg以下</option><option>5-15kg</option><option>15-25kg</option></select></div>
-        <div style="font-size:10px;color:var(--accent);padding:4px 0">📷 上传照片：[选择图片]</div>
+        <div style="font-size:10px;color:var(--accent);padding:6px 0;cursor:pointer" onclick="toast('📷 请从相册选择照片')">📷 上传照片：[选择图片]</div>
         <div class="section-label">2. 基础服务（必选）</div>
         <div class="check-row"><label><input type="checkbox" checked onchange="updateTotal()"> 市区遗体接送</label><span>¥120</span></div>
         <div class="check-row"><label><input type="checkbox" checked onchange="updateTotal()"> 遗体清洁与整理</label><span>¥150</span></div>
@@ -333,15 +449,15 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
         <div class="check-row"><label><input type="checkbox" onchange="updateTotal()"> 纪念树苗</label><span>+¥150</span></div>
         <div class="divider"></div>
         <div class="total-row">📢 当前总计：<span id="grandTotal">¥1,129</span></div>
-        <div style="font-size:10px;display:flex;align-items:center;gap:4px;padding:4px 0">
-          <input type="checkbox" id="agree"> <label for="agree">已阅读并同意《服务协议》</label>
+        <div style="font-size:10px;display:flex;align-items:center;gap:4px;padding:6px 0">
+          <input type="checkbox" id="agree"> <label for="agree" style="cursor:pointer">已阅读并同意《服务协议》</label>
         </div>
         <button class="btn btn-accent" onclick="submitBooking()">确认预约 · 预付定金 ¥200</button>
       </div>
     </div>
 
     <!-- ========== ORDER TRACKING ========== -->
-    <div class="page" id="page-tracking">
+    <div class="page" id="page-tracking" data-tab="">
       <div class="top-nav"><button class="nav-back" onclick="goBack()">←</button><span class="nav-title">订单跟踪</span><span style="font-size:10px;color:var(--text3)">AY20260716001</span></div>
       <div class="content-pad">
         <div style="font-size:11px;margin-bottom:8px"><strong>状态：</strong><span style="color:var(--accent);font-weight:600">🌱 降解中</span></div>
@@ -360,7 +476,7 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
         <div class="info-card">
           <div style="font-weight:600;font-size:11px">🎥 全程视频存证（加密）</div>
           <div style="font-size:10px">已录制：接送→清洁→封装→掩埋</div>
-          <div style="color:var(--accent);cursor:pointer;font-size:10px" onclick="toast('🔒 正在验证区块链存证...\n存证号：0x7f9a8b3c...\n验证通过 ✓')">[点击查看]</div>
+          <div style="color:var(--accent);cursor:pointer;font-size:10px;padding-top:4px" onclick="toast('🔒 正在验证区块链存证...\n存证号：0x7f9a8b3c...\n✓ 验证通过')">[点击查看]</div>
         </div>
         <div style="font-size:10px;color:var(--text3);padding:4px 0">🔒 区块链存证号：0x7f9a...</div>
         <div class="section-label">费用明细</div>
@@ -369,18 +485,18 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
     </div>
 
     <!-- ========== MEMORIAL SPACE ========== -->
-    <div class="page" id="page-memorial">
+    <div class="page" id="page-memorial" data-tab="memorial">
       <div class="content-pad">
         <div class="profile-header">
           <div class="avatar">🐾</div>
           <div><div style="font-weight:700;font-size:14px">团团</div><div style="font-size:10px;color:var(--text2)">🌈 2020.03.15 - 2026.07.14</div></div>
         </div>
-        <div class="rainbow-text" style="text-align:center;color:var(--accent);font-style:italic;font-size:11px;padding:4px 0">🌈 谢谢你陪我走过的每一天</div>
+        <div style="text-align:center;color:var(--accent);font-style:italic;font-size:11px;padding:4px 0">🌈 谢谢你陪我走过的每一天</div>
         <div class="section-label">生命故事</div>
         <div class="story-card">
           <div class="story-date">2020.03.15</div>
-          <div>第一次来到家里，小小的你躲在沙发后面不敢出来...</div>
-          <div style="color:var(--accent);text-align:right;cursor:pointer" onclick="toast('展开全文...')">[展开阅读]</div>
+          <div>第一次来到家里，小小的你躲在沙发后面不敢出来...慢慢地，你成了家里最温暖的存在。</div>
+          <div style="color:var(--accent);text-align:right;cursor:pointer;padding-top:4px" onclick="toast('2020.03.15 — 来到家里\n2020.06.01 — 第一次去公园\n2021.02.14 — 陪我度过最难的时光\n2023.09.10 — 生日派对，你戴着小帽子\n2026.07.14 — 安详地离开，回到星球\n\n谢谢你，团团。')">[展开阅读]</div>
         </div>
         <div class="section-label">降解状态</div>
         <div style="font-size:10px;color:var(--text2)">🌱 正在自然降解中...</div>
@@ -388,21 +504,21 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
         <div style="font-size:10px;color:var(--text2)">已降解 30% · 预计2027.03完成</div>
         <div class="section-label">影像记忆</div>
         <div class="photo-grid">
-          <div class="photo-thumb">📷</div><div class="photo-thumb">📷</div><div class="photo-thumb">📷</div><div class="photo-thumb">📷</div>
-          <div class="photo-thumb">📷</div><div class="photo-thumb" style="border:1px dashed var(--border);background:transparent;cursor:pointer" onclick="toast('上传照片')">+</div>
+          <div class="photo-thumb" onclick="toast('📷 团团的照片')">📷</div><div class="photo-thumb" onclick="toast('📷 团团的照片')">📷</div><div class="photo-thumb" onclick="toast('📷 团团的照片')">📷</div><div class="photo-thumb" onclick="toast('📷 团团的照片')">📷</div>
+          <div class="photo-thumb" onclick="toast('📷 团团的照片')">📷</div><div class="photo-thumb" style="border:1px dashed var(--border);background:transparent;cursor:pointer" onclick="toast('📷 请从相册选择照片上传')">+</div>
         </div>
         <div class="section-label">纪念日提醒</div>
         <div class="reminder-card">
           <div class="r-date">📅 2026-08-13</div>
-          <div class="r-event"><h4>🌈 团团离开30天</h4><p>"今天是团团的离开日，你想对它说些什么？"</p><div class="btn-row"><span class="btn-sm" onclick="toast('✉️ 写信功能')">✉️ 写一封信</span><span class="btn-sm" onclick="toast('🕯️ 已点亮')">🕯️ 点一盏灯</span></div></div>
+          <div class="r-event"><h4>🌈 团团离开30天</h4><p>"今天是团团的离开日，你想对它说些什么？"</p><div class="btn-row"><span class="btn-sm" onclick="toast('✉️ 写给团团的一封信...')">✉️ 写一封信</span><span class="btn-sm" onclick="toast('🕯️ 已为团团点亮一盏灯\n愿它在星球上安好')">🕯️ 点一盏灯</span></div></div>
           <div class="r-date">📅 2027-07-14</div>
-          <div class="r-event"><h4>🌈 团团离开一周年</h4><div class="btn-row"><span class="btn-sm filled" onclick="toast('纪念日策划中...')">🕊️ 纪念日策划</span></div></div>
+          <div class="r-event"><h4>🌈 团团离开一周年</h4><div class="btn-row"><span class="btn-sm filled" onclick="toast('🕊️ 一周年纪念策划\n我们将为您准备：\n· 纪念仪式 · 鲜花 · 纪念视频')">🕊️ 纪念日策划</span></div></div>
         </div>
         <div class="section-label">纪念品</div>
-        <div class="memento-row"><span>💎 骨灰晶石 已定制</span><span style="color:var(--accent);cursor:pointer">[查看]</span></div>
-        <div class="memento-row"><span>🐾 爪印银饰 已定制</span><span style="color:var(--accent);cursor:pointer">[查看]</span></div>
+        <div class="memento-row" onclick="toast('💎 骨灰晶石\n状态：已定制\n编号：CRY-20260716-001')"><span>💎 骨灰晶石 已定制</span><span style="color:var(--accent);cursor:pointer">[查看]</span></div>
+        <div class="memento-row" onclick="toast('🐾 爪印银饰\n状态：已定制\n编号：PAW-20260716-001')"><span>🐾 爪印银饰 已定制</span><span style="color:var(--accent);cursor:pointer">[查看]</span></div>
         <div class="section-label">VR纪念空间</div>
-        <div class="vr-card" onclick="toast('🥽 正在加载VR纪念空间...')">
+        <div class="vr-card" onclick="toast('🥽 正在加载VR纪念空间...\n🌳 彩虹桥场景\n🐾 团团在草地上奔跑\n✨ 支持VR眼镜体验')">
           <h3>🌈 彩虹桥纪念空间</h3>
           <div style="font-size:32px;margin:6px 0">🌳🐾✨</div>
           <span class="vr-btn">🥽 点击进入VR</span>
@@ -412,7 +528,7 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
     </div>
 
     <!-- ========== COMMUNITY ========== -->
-    <div class="page" id="page-community">
+    <div class="page" id="page-community" data-tab="community">
       <div class="content-pad">
         <div class="section-label">话题分类</div>
         <div class="filter-row">
@@ -421,27 +537,27 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
           <span class="filter-pill" onclick="filterPills(this)">分享</span>
           <span class="filter-pill" onclick="filterPills(this)">互助</span>
         </div>
-        <div class="post-card">
+        <div class="post-card" onclick="toast('💬 查看全文和评论')">
           <div style="font-weight:600;font-size:11px">💬 用户***</div>
           <div class="post-body">"选择了生态降解，让它回归自然，感觉它从未真正离开"</div>
           <div class="post-meta">⏱2小时前 · ❤️128 · 💬23</div>
         </div>
-        <div class="post-card">
+        <div class="post-card" onclick="toast('💬 查看全文和评论')">
           <div style="font-weight:600;font-size:11px">💬 用户***</div>
           <div class="post-body">"¥399的极简降解，服务很专业，很安心"</div>
           <div class="post-meta">⏱5小时前 · ❤️89 · 💬15</div>
         </div>
-        <div class="post-card">
+        <div class="post-card" onclick="toast('📖 阅读科普文章')">
           <div style="font-weight:600;font-size:11px">📖 科普知识</div>
           <div class="post-body">"生态降解6个月后发生了什么？一文看懂全过程"</div>
           <div class="post-meta">⏱1天前 · 👁️345</div>
         </div>
-        <button class="btn btn-accent" style="margin-top:8px" onclick="toast('发布动态')">✏️ 发布动态</button>
+        <button class="btn btn-accent" style="margin-top:8px" onclick="toast('✏️ 发布你的动态\n分享与宠物的故事...')">✏️ 发布动态</button>
       </div>
     </div>
 
     <!-- ========== MY PROFILE ========== -->
-    <div class="page" id="page-profile">
+    <div class="page" id="page-profile" data-tab="profile">
       <div class="content-pad">
         <div class="profile-header">
           <div class="avatar">👤</div>
@@ -450,7 +566,7 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
         <div class="icon-grid">
           <div class="icon-cell" onclick="switchTab('services')"><span class="ic">📋</span>订单管理</div>
           <div class="icon-cell" onclick="switchTab('memorial')"><span class="ic">💎</span>纪念空间</div>
-          <div class="icon-cell" onclick="toast('收藏')"><span class="ic">⭐</span>收藏</div>
+          <div class="icon-cell" onclick="toast('⭐ 我的收藏')"><span class="ic">⭐</span>收藏</div>
         </div>
         <div class="section-label">近期订单</div>
         <div class="card" onclick="navigateTo('tracking')">
@@ -461,13 +577,13 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
           </div>
         </div>
         <div class="section-label">我的纪念空间</div>
-        <div style="font-size:11px;padding:4px 0">🐾 团团（金毛）🌱 降解中</div>
-        <div style="font-size:11px;color:var(--accent);cursor:pointer" onclick="switchTab('memorial')">[+ 创建新的纪念空间]</div>
+        <div style="font-size:11px;padding:4px 0;cursor:pointer" onclick="switchTab('memorial')">🐾 团团（金毛）🌱 降解中</div>
+        <div style="font-size:11px;color:var(--accent);cursor:pointer;padding:4px 0" onclick="toast('➕ 创建新的纪念空间\n为你的新伙伴建立一个永恒的纪念')">[+ 创建新的纪念空间]</div>
         <div class="section-label">客服与设置</div>
-        <div style="font-size:11px;display:flex;gap:16px;color:var(--text2);padding:4px 0">
-          <span style="cursor:pointer" onclick="toast('📞 在线客服接入中...')">📞 客服</span>
-          <span style="cursor:pointer" onclick="toast('📖 帮助中心')">📖 帮助</span>
-          <span style="cursor:pointer" onclick="toast('⚙️ 设置')">⚙️ 设置</span>
+        <div style="font-size:11px;display:flex;gap:20px;color:var(--text2);padding:6px 0">
+          <span style="cursor:pointer" onclick="toast('📞 在线客服接入中...\n工作时间 9:00-21:00')">📞 客服</span>
+          <span style="cursor:pointer" onclick="toast('📖 帮助中心\n常见问题 · 服务流程 · 费用说明')">📖 帮助</span>
+          <span style="cursor:pointer" onclick="toast('⚙️ 设置\n个人信息 · 通知管理 · 隐私设置')">⚙️ 设置</span>
         </div>
         <div class="privacy-badge">🔒 云端永久存储 · 隐私保护</div>
       </div>
@@ -486,90 +602,197 @@ select{padding:4px 0;border-bottom:1px solid var(--border)}
 </div>
 
 <script>
-// Tab switching
-const pages = {home:'page-home',services:'page-services',memorial:'page-memorial',community:'page-community',profile:'page-profile'};
-const subtitles = {home:'安伴星球',services:'服务',memorial:'纪念空间',community:'社区',profile:'个人中心'};
+// ===== CONSTANTS =====
+const PAGE_MAP = {
+  home:'page-home', services:'page-services', memorial:'page-memorial',
+  community:'page-community', profile:'page-profile'
+};
+const SUBTITLES = {
+  home:'安伴星球', services:'服务', memorial:'纪念空间', community:'社区', profile:'个人中心'
+};
+const SUB_PAGES = { booking:'page-booking', tracking:'page-tracking' };
+
 let currentTab = 'home';
 let navStack = [];
+let isAnimating = false;
 
-function switchTab(tab){
-  if(tab === currentTab && navStack.length === 0) return;
+// ===== PAGE TRANSITIONS =====
+function animatePageTransition(fromId, toId, direction) {
+  return new Promise(resolve => {
+    const fromEl = fromId ? document.getElementById(fromId) : null;
+    const toEl = document.getElementById(toId);
+    if (!toEl) { resolve(); return; }
+
+    const exitClass = direction === 'forward' ? 'exit-forward' : 'exit-backward';
+    const enterClass = direction === 'forward' ? 'enter-forward' : 'enter-backward';
+
+    // Prepare entering page
+    toEl.classList.add(enterClass);
+    toEl.classList.add('active');
+    // Force reflow
+    toEl.offsetHeight;
+
+    // Exit current page
+    if (fromEl) {
+      fromEl.classList.add(exitClass);
+      fromEl.classList.remove('active');
+    }
+
+    // Enter new page
+    requestAnimationFrame(() => {
+      toEl.classList.remove(enterClass);
+    });
+
+    // Clean up after transition
+    const onEnd = () => {
+      if (fromEl) {
+        fromEl.classList.remove(exitClass);
+      }
+      toEl.removeEventListener('transitionend', onEnd);
+      resolve();
+    };
+    toEl.addEventListener('transitionend', onEnd, { once: true });
+    // Fallback timeout
+    setTimeout(() => {
+      if (fromEl) fromEl.classList.remove(exitClass);
+      toEl.classList.remove(enterClass);
+      resolve();
+    }, 350);
+  });
+}
+
+// ===== TAB SWITCHING =====
+async function switchTab(tab, direction) {
+  if (isAnimating) return;
+  if (tab === currentTab && navStack.length === 0) return;
+
+  const fromId = PAGE_MAP[currentTab];
+  const toId = PAGE_MAP[tab];
+  if (!toId) return;
+
+  isAnimating = true;
   navStack = [];
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const pid = pages[tab];
-  if(pid) document.getElementById(pid).classList.add('active');
-  document.querySelectorAll('#tabBar .tab-item').forEach(b=>b.classList.remove('active'));
+
+  // Determine direction
+  const tabOrder = ['home','services','memorial','community','profile'];
+  const fromIdx = tabOrder.indexOf(currentTab);
+  const toIdx = tabOrder.indexOf(tab);
+  const dir = direction || (toIdx > fromIdx ? 'forward' : 'backward');
+
+  // Animate
+  await animatePageTransition(fromId, toId, dir);
+
+  // Update UI
+  document.querySelectorAll('#tabBar .tab-item').forEach(b => b.classList.remove('active'));
   const btn = document.querySelector(`[data-tab="${tab}"]`);
-  if(btn) btn.classList.add('active');
-  document.getElementById('pageTitle').textContent = subtitles[tab] || tab;
+  if (btn) btn.classList.add('active');
+  document.getElementById('pageTitle').textContent = SUBTITLES[tab] || tab;
   currentTab = tab;
-  document.getElementById('pages').scrollTop = 0;
+  document.getElementById(toId).scrollTop = 0;
+  isAnimating = false;
 }
 
-function navigateTo(page){
+// ===== NAVIGATION (sub-pages: booking, tracking) =====
+async function navigateTo(page) {
+  if (isAnimating) return;
+  const fromId = PAGE_MAP[currentTab] || SUB_PAGES[Object.keys(SUB_PAGES).find(k => SUB_PAGES[k] === document.querySelector('.page.active')?.id) || ''] || 'page-' + currentTab;
+  const toId = SUB_PAGES[page];
+  if (!toId) return;
+
+  isAnimating = true;
   navStack.push(currentTab);
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const map = {booking:'page-booking',tracking:'page-tracking'};
-  const pid = map[page];
-  if(pid) document.getElementById(pid).classList.add('active');
-  document.getElementById('pageTitle').textContent = page==='booking'?'预约服务':'订单跟踪';
-  document.getElementById('pages').scrollTop = 0;
+
+  // Find currently visible page
+  let visibleId = null;
+  document.querySelectorAll('.page.active').forEach(p => { visibleId = p.id; });
+
+  await animatePageTransition(visibleId, toId, 'forward');
+
+  document.getElementById('pageTitle').textContent = page === 'booking' ? '预约服务' : '订单跟踪';
+  document.getElementById(toId).scrollTop = 0;
+  isAnimating = false;
 }
 
-function goBack(){
-  if(navStack.length > 0){
-    switchTab(navStack.pop());
-  }
+// ===== GO BACK =====
+async function goBack() {
+  if (isAnimating) return;
+  if (navStack.length === 0) return;
+
+  isAnimating = true;
+  const prevTab = navStack.pop();
+
+  // Find current sub-page
+  let currentId = null;
+  document.querySelectorAll('.page.active').forEach(p => { currentId = p.id; });
+
+  const toId = PAGE_MAP[prevTab];
+  if (!toId) { isAnimating = false; return; }
+
+  await animatePageTransition(currentId, toId, 'backward');
+
+  // Update UI
+  document.querySelectorAll('#tabBar .tab-item').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`[data-tab="${prevTab}"]`);
+  if (btn) btn.classList.add('active');
+  document.getElementById('pageTitle').textContent = SUBTITLES[prevTab] || prevTab;
+  currentTab = prevTab;
+  document.getElementById(toId).scrollTop = 0;
+  isAnimating = false;
 }
 
-// Filter pills
-function filterPills(el){
-  el.parentElement.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('on'));
+// ===== FILTER PILLS =====
+function filterPills(el) {
+  el.parentElement.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('on'));
   el.classList.add('on');
 }
 
-// Tier selection
-function selectTier(el){
-  el.parentElement.querySelectorAll('.tier-card').forEach(c=>c.classList.remove('sel'));
+// ===== TIER SELECTION =====
+function selectTier(el) {
+  el.parentElement.querySelectorAll('.tier-card').forEach(c => c.classList.remove('sel'));
   el.classList.add('sel');
 }
 
-// Booking total calculator
-function updateTotal(){
+// ===== BOOKING TOTAL =====
+function updateTotal() {
   const checks = document.querySelectorAll('#page-booking .check-row input[type=checkbox]');
   let base = 0, extras = 0;
-  checks.forEach((cb,i)=>{
-    if(cb.checked){
-      const v = [120,150,180,100,199,259,150][i];
-      if(i<4) base += v; else extras += v;
+  const values = [120, 150, 180, 100, 199, 259, 150];
+  checks.forEach((cb, i) => {
+    if (cb.checked) {
+      if (i < 4) base += values[i]; else extras += values[i];
     }
   });
-  const ceremony = document.querySelector('#page-booking select')?.value || '0';
-  const ceremonyVal = parseInt(ceremony) || 0;
-  document.getElementById('baseTotal').textContent = '¥'+base;
-  document.getElementById('grandTotal').textContent = '¥'+(base+ceremonyVal+extras);
+  const ceremonySelect = document.querySelector('#page-booking .content-pad > select');
+  const ceremonyVal = ceremonySelect ? (parseInt(ceremonySelect.value) || 0) : 400;
+  document.getElementById('baseTotal').textContent = '¥' + base;
+  document.getElementById('grandTotal').textContent = '¥' + (base + ceremonyVal + extras);
 }
 
-function submitBooking(){
-  if(!document.getElementById('agree').checked){
-    toast('请先阅读并同意《服务协议》');
+// ===== SUBMIT BOOKING =====
+function submitBooking() {
+  if (!document.getElementById('agree').checked) {
+    toast('⚠️ 请先阅读并同意《服务协议》');
     return;
   }
-  toast('✅ 预约成功！订单号：AY'+Date.now().toString(36).toUpperCase());
-  setTimeout(()=>navigateTo('tracking'),1500);
+  toast('✅ 预约成功！\n订单号：AY' + Date.now().toString(36).toUpperCase() + '\n专属顾问将在10分钟内联系您');
+  setTimeout(() => navigateTo('tracking'), 1800);
 }
 
-// Toast
-function toast(msg){
+// ===== TOAST =====
+let toastTimer;
+function toast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.add('show');
-  clearTimeout(el._t);
-  el._t = setTimeout(()=>el.classList.remove('show'),2000);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
-// Init
+// ===== INIT =====
 updateTotal();
+
+// Handle back button on booking/tracking pages via the back button in top-nav
+// The goBack() function is already called by onclick
 </script>
 </body>
 </html>

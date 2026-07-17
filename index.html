@@ -27,10 +27,7 @@ body{
   box-shadow:0 4px 16px rgba(0,0,0,.10),0 12px 36px rgba(0,0,0,.08);
   display:flex; flex-direction:column; position:relative;
 }
-.status-bar{
-  display:flex; justify-content:space-between; padding:8px 16px 4px;
-  font-size:11px; color:var(--text3); background:var(--card); flex-shrink:0;
-}
+
 
 /* ===== PAGE CONTAINER & TRANSITIONS ===== */
 .pages{
@@ -330,6 +327,86 @@ select{padding:4px 0;border-bottom:1px solid var(--border); cursor:pointer}
   max-width:85vw; box-shadow:0 8px 24px rgba(0,0,0,.25);
 }
 .alert-toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+/* ===== LIGHTBOX ===== */
+.lightbox-overlay{
+  position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999;
+  background:rgba(0,0,0,.88); display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .3s;
+  cursor:pointer;
+}
+.lightbox-overlay.show{opacity:1; pointer-events:auto}
+.lightbox-overlay .lb-content{
+  max-width:90vw; max-height:80vh; font-size:80px; text-align:center;
+  animation:lb-zoom .3s ease;
+}
+@keyframes lb-zoom{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.lightbox-overlay .lb-close{
+  position:absolute; top:20px; right:20px; width:36px; height:36px;
+  border-radius:50%; background:rgba(255,255,255,.15); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-size:18px;
+  cursor:pointer; transition:background .2s;
+}
+.lightbox-overlay .lb-close:active{background:rgba(255,255,255,.3)}
+
+/* ===== CONFETTI ===== */
+.confetti-piece{
+  position:fixed; z-index:99999; pointer-events:none;
+  width:10px; height:10px; border-radius:2px;
+  animation:confetti-fall .8s ease-out forwards;
+}
+@keyframes confetti-fall{
+  0%{transform:translateY(0) rotate(0deg) scale(1);opacity:1}
+  100%{transform:translateY(400px) rotate(720deg) scale(0);opacity:0}
+}
+
+/* ===== FLOATING HEARTS ===== */
+.float-heart{
+  position:absolute; z-index:99; pointer-events:none; font-size:18px;
+  animation:heart-float .9s ease-out forwards;
+}
+@keyframes heart-float{
+  0%{transform:translateY(0) scale(.5);opacity:1}
+  50%{transform:translateY(-30px) scale(1.4);opacity:.8}
+  100%{transform:translateY(-60px) scale(.3);opacity:0}
+}
+
+/* ===== TAB BADGE ===== */
+.tab-badge{
+  position:absolute; top:-2px; right:-8px; min-width:16px; height:16px;
+  border-radius:8px; background:#e85d3a; color:#fff; font-size:9px;
+  display:flex; align-items:center; justify-content:center; padding:0 5px;
+  font-weight:700; animation:badge-pop .4s ease;
+}
+@keyframes badge-pop{0%{transform:scale(0)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+
+/* ===== PULL-TO-REFRESH ===== */
+.pull-indicator{
+  position:absolute; top:-50px; left:50%; transform:translateX(-50%);
+  width:32px; height:32px; border-radius:50%; background:var(--card);
+  box-shadow:0 2px 8px rgba(0,0,0,.1); display:flex; align-items:center;
+  justify-content:center; font-size:16px; z-index:5;
+  transition:top .25s ease;
+}
+.pull-indicator.visible{top:10px}
+.pull-indicator.loading{animation:spin .7s linear infinite}
+@keyframes spin{100%{transform:translateX(-50%) rotate(360deg)}}
+
+/* ===== COUNTER BOUNCE ===== */
+.counter-bounce{animation:cnt-bounce .4s ease}
+@keyframes cnt-bounce{0%{transform:scale(1)}30%{transform:scale(1.25)}100%{transform:scale(1)}}
+
+/* ===== SECTION COLLAPSE ===== */
+.collapse-toggle{
+  cursor:pointer; display:flex; align-items:center; justify-content:space-between;
+  width:100%; background:none; border:none; font-family:inherit; color:var(--text);
+}
+.collapse-toggle .chevron{
+  transition:transform .3s; font-size:10px; color:var(--text3);
+}
+.collapse-toggle.open .chevron{transform:rotate(180deg)}
+.collapse-body{overflow:hidden; transition:max-height .35s ease, opacity .25s ease}
+.collapse-body.closed{max-height:0!important; opacity:0}
 </style>
 </head>
 <body>
@@ -337,8 +414,11 @@ select{padding:4px 0;border-bottom:1px solid var(--border); cursor:pointer}
 <div class="app" id="app">
   <div id="toast" class="alert-toast"></div>
 
-  <!-- Status Bar -->
-  <div class="status-bar"><span>9:41</span><span id="pageTitle">安伴星球</span><span>📶 🔋</span></div>
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox-overlay" onclick="closeLightbox()">
+    <span class="lb-close" onclick="closeLightbox()">✕</span>
+    <div class="lb-content" id="lbContent"></div>
+  </div>
 
   <!-- Page Container -->
   <div class="pages" id="pages">
@@ -492,11 +572,22 @@ select{padding:4px 0;border-bottom:1px solid var(--border); cursor:pointer}
           <div><div style="font-weight:700;font-size:14px">团团</div><div style="font-size:10px;color:var(--text2)">🌈 2020.03.15 - 2026.07.14</div></div>
         </div>
         <div style="text-align:center;color:var(--accent);font-style:italic;font-size:11px;padding:4px 0">🌈 谢谢你陪我走过的每一天</div>
-        <div class="section-label">生命故事</div>
+        <div class="section-label" style="cursor:pointer" onclick="toggleCollapse(this)">
+          生命故事 <span class="chevron" style="font-size:10px;color:var(--text3)">▼</span>
+        </div>
+        <div class="collapse-body" id="collapseStory" style="max-height:300px">
         <div class="story-card">
           <div class="story-date">2020.03.15</div>
           <div>第一次来到家里，小小的你躲在沙发后面不敢出来...慢慢地，你成了家里最温暖的存在。</div>
-          <div style="color:var(--accent);text-align:right;cursor:pointer;padding-top:4px" onclick="toast('2020.03.15 — 来到家里\n2020.06.01 — 第一次去公园\n2021.02.14 — 陪我度过最难的时光\n2023.09.10 — 生日派对，你戴着小帽子\n2026.07.14 — 安详地离开，回到星球\n\n谢谢你，团团。')">[展开阅读]</div>
+          <div class="story-date" style="margin-top:8px">2020.06.01</div>
+          <div>第一次带你去公园，你兴奋地在草地上奔跑，追着蝴蝶不肯回家。</div>
+          <div class="story-date" style="margin-top:8px">2021.02.14</div>
+          <div>那个最难的情人节，你安静地趴在我脚边，用你的方式告诉我一切都会好的。</div>
+          <div class="story-date" style="margin-top:8px">2023.09.10</div>
+          <div>你的三岁生日派对，戴着小帽子，吃了特制的蛋糕，那天你真开心。</div>
+          <div class="story-date" style="margin-top:8px">2026.07.14</div>
+          <div>安详地离开，回到属于你的星球。谢谢你，团团。</div>
+        </div>
         </div>
         <div class="section-label">降解状态</div>
         <div style="font-size:10px;color:var(--text2)">🌱 正在自然降解中...</div>
@@ -504,8 +595,8 @@ select{padding:4px 0;border-bottom:1px solid var(--border); cursor:pointer}
         <div style="font-size:10px;color:var(--text2)">已降解 30% · 预计2027.03完成</div>
         <div class="section-label">影像记忆</div>
         <div class="photo-grid">
-          <div class="photo-thumb" onclick="toast('📷 团团的照片')">📷</div><div class="photo-thumb" onclick="toast('📷 团团的照片')">📷</div><div class="photo-thumb" onclick="toast('📷 团团的照片')">📷</div><div class="photo-thumb" onclick="toast('📷 团团的照片')">📷</div>
-          <div class="photo-thumb" onclick="toast('📷 团团的照片')">📷</div><div class="photo-thumb" style="border:1px dashed var(--border);background:transparent;cursor:pointer" onclick="toast('📷 请从相册选择照片上传')">+</div>
+          <div class="photo-thumb" onclick="event.stopPropagation();openLightbox('🐶')">📷</div><div class="photo-thumb" onclick="event.stopPropagation();openLightbox('🌳')">📷</div><div class="photo-thumb" onclick="event.stopPropagation();openLightbox('🎂')">📷</div><div class="photo-thumb" onclick="event.stopPropagation();openLightbox('🏃')">📷</div>
+          <div class="photo-thumb" onclick="event.stopPropagation();openLightbox('☀️')">📷</div><div class="photo-thumb" style="border:1px dashed var(--border);background:transparent;cursor:pointer" onclick="event.stopPropagation();toast('📷 请从相册选择照片上传')">+</div>
         </div>
         <div class="section-label">纪念日提醒</div>
         <div class="reminder-card">
@@ -540,17 +631,29 @@ select{padding:4px 0;border-bottom:1px solid var(--border); cursor:pointer}
         <div class="post-card" onclick="toast('💬 查看全文和评论')">
           <div style="font-weight:600;font-size:11px">💬 用户***</div>
           <div class="post-body">"选择了生态降解，让它回归自然，感觉它从未真正离开"</div>
-          <div class="post-meta">⏱2小时前 · ❤️128 · 💬23</div>
+          <div class="post-meta">
+            <span>⏱2小时前</span>
+            <span style="cursor:pointer;position:relative" onclick="event.stopPropagation();likePost(this,'❤️','129')">❤️<span style="margin-left:2px">128</span></span>
+            <span>💬23</span>
+          </div>
         </div>
         <div class="post-card" onclick="toast('💬 查看全文和评论')">
           <div style="font-weight:600;font-size:11px">💬 用户***</div>
           <div class="post-body">"¥399的极简降解，服务很专业，很安心"</div>
-          <div class="post-meta">⏱5小时前 · ❤️89 · 💬15</div>
+          <div class="post-meta">
+            <span>⏱5小时前</span>
+            <span style="cursor:pointer;position:relative" onclick="event.stopPropagation();likePost(this,'❤️','90')">❤️<span style="margin-left:2px">89</span></span>
+            <span>💬15</span>
+          </div>
         </div>
         <div class="post-card" onclick="toast('📖 阅读科普文章')">
           <div style="font-weight:600;font-size:11px">📖 科普知识</div>
           <div class="post-body">"生态降解6个月后发生了什么？一文看懂全过程"</div>
-          <div class="post-meta">⏱1天前 · 👁️345</div>
+          <div class="post-meta">
+            <span>⏱1天前</span>
+            <span>👁️345</span>
+            <span style="cursor:pointer;position:relative" onclick="event.stopPropagation();likePost(this,'⭐','56')">⭐<span style="margin-left:2px">55</span></span>
+          </div>
         </div>
         <button class="btn btn-accent" style="margin-top:8px" onclick="toast('✏️ 发布你的动态\n分享与宠物的故事...')">✏️ 发布动态</button>
       </div>
@@ -596,7 +699,7 @@ select{padding:4px 0;border-bottom:1px solid var(--border); cursor:pointer}
     <button class="tab-item active" data-tab="home" onclick="switchTab('home')"><span class="tab-icon">🏠</span>首页</button>
     <button class="tab-item" data-tab="services" onclick="switchTab('services')"><span class="tab-icon">📋</span>服务</button>
     <button class="tab-item" data-tab="memorial" onclick="switchTab('memorial')"><span class="tab-icon">💎</span>纪念</button>
-    <button class="tab-item" data-tab="community" onclick="switchTab('community')"><span class="tab-icon">💬</span>社区</button>
+    <button class="tab-item" data-tab="community" onclick="switchTab('community')"><span class="tab-icon" style="position:relative">💬<span class="tab-badge" id="communityBadge">3</span></span>社区</button>
     <button class="tab-item" data-tab="profile" onclick="switchTab('profile')"><span class="tab-icon">👤</span>我的</button>
   </div>
 </div>
@@ -686,7 +789,6 @@ async function switchTab(tab, direction) {
   document.querySelectorAll('#tabBar .tab-item').forEach(b => b.classList.remove('active'));
   const btn = document.querySelector(`[data-tab="${tab}"]`);
   if (btn) btn.classList.add('active');
-  document.getElementById('pageTitle').textContent = SUBTITLES[tab] || tab;
   currentTab = tab;
   document.getElementById(toId).scrollTop = 0;
   isAnimating = false;
@@ -708,7 +810,6 @@ async function navigateTo(page) {
 
   await animatePageTransition(visibleId, toId, 'forward');
 
-  document.getElementById('pageTitle').textContent = page === 'booking' ? '预约服务' : '订单跟踪';
   document.getElementById(toId).scrollTop = 0;
   isAnimating = false;
 }
@@ -734,7 +835,6 @@ async function goBack() {
   document.querySelectorAll('#tabBar .tab-item').forEach(b => b.classList.remove('active'));
   const btn = document.querySelector(`[data-tab="${prevTab}"]`);
   if (btn) btn.classList.add('active');
-  document.getElementById('pageTitle').textContent = SUBTITLES[prevTab] || prevTab;
   currentTab = prevTab;
   document.getElementById(toId).scrollTop = 0;
   isAnimating = false;
@@ -774,6 +874,7 @@ function submitBooking() {
     toast('⚠️ 请先阅读并同意《服务协议》');
     return;
   }
+  spawnConfetti();
   toast('✅ 预约成功！\n订单号：AY' + Date.now().toString(36).toUpperCase() + '\n专属顾问将在10分钟内联系您');
   setTimeout(() => navigateTo('tracking'), 1800);
 }
@@ -787,6 +888,141 @@ function toast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
 }
+
+// ===== LIGHTBOX =====
+function openLightbox(emoji) {
+  const lb = document.getElementById('lightbox');
+  const content = document.getElementById('lbContent');
+  content.innerHTML = emoji + '<div style="font-size:13px;color:#fff;margin-top:12px;opacity:.7">点击任意处关闭</div>';
+  lb.classList.add('show');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('show');
+}
+
+// ===== CONFETTI =====
+function spawnConfetti() {
+  const colors = ['#b8956a','#e8875b','#a3b5a1','#c9a8a0','#c4b188','#7a6a8a','#f5c242','#e8567c'];
+  const btn = document.querySelector('#page-booking .btn-accent');
+  const rect = btn ? btn.getBoundingClientRect() : {left:window.innerWidth/2,top:window.innerHeight/2};
+  for (let i = 0; i < 50; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.cssText = `
+      left:${rect.left + rect.width/2 + (Math.random()-0.5)*200}px;
+      top:${rect.top}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      width:${6+Math.random()*10}px; height:${6+Math.random()*10}px;
+      animation-delay:${Math.random()*.3}s;
+      animation-duration:${.6+Math.random()*.7}s;
+    `;
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 1200);
+  }
+}
+
+// ===== LIKE / HEART ANIMATION =====
+function likePost(el, icon, newCount) {
+  // Update count
+  const countSpan = el.querySelector('span');
+  if (countSpan) countSpan.textContent = newCount;
+  // Spawn floating hearts
+  const rect = el.getBoundingClientRect();
+  for (let i = 0; i < 6; i++) {
+    const heart = document.createElement('span');
+    heart.className = 'float-heart';
+    heart.textContent = icon || '❤️';
+    heart.style.cssText = `
+      left:${rect.left + rect.width/2 + (Math.random()-0.5)*40}px;
+      top:${rect.top}px;
+      animation-delay:${Math.random()*.25}s;
+      animation-duration:${.7+Math.random()*.5}s;
+      font-size:${14+Math.random()*12}px;
+    `;
+    document.body.appendChild(heart);
+    setTimeout(() => heart.remove(), 1200);
+  }
+}
+
+// ===== ANIMATED COUNTER =====
+let counterAnimId;
+function animateCounter(el, target) {
+  const current = parseInt(el.textContent.replace(/[^0-9]/g,'')) || 0;
+  if (current === target) return;
+  cancelAnimationFrame(counterAnimId);
+  const duration = 400, start = performance.now();
+  el.classList.add('counter-bounce');
+  setTimeout(() => el.classList.remove('counter-bounce'), 400);
+  function step(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - p, 3); // ease-out
+    el.textContent = '¥' + Math.round(current + (target - current) * eased);
+    if (p < 1) counterAnimId = requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ===== PULL-TO-REFRESH =====
+let pullStartY = 0, pulling = false;
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.page').forEach(page => {
+    page.addEventListener('touchstart', e => {
+      if (page.scrollTop <= 0) { pullStartY = e.touches[0].clientY; pulling = true; }
+    }, {passive:true});
+    page.addEventListener('touchmove', e => {
+      if (!pulling) return;
+      const dy = e.touches[0].clientY - pullStartY;
+      if (dy > 40 && page.scrollTop <= 5) {
+        const indicator = page.querySelector('.pull-indicator') || createPullIndicator(page);
+        indicator.classList.add('visible');
+      }
+    }, {passive:true});
+    page.addEventListener('touchend', e => {
+      if (!pulling) return;
+      pulling = false;
+      const indicator = page.querySelector('.pull-indicator');
+      if (indicator && indicator.classList.contains('visible')) {
+        indicator.classList.add('loading');
+        setTimeout(() => {
+          indicator.classList.remove('loading','visible');
+          toast('✅ 已刷新');
+        }, 600);
+      }
+    });
+  });
+});
+function createPullIndicator(page) {
+  const el = document.createElement('div');
+  el.className = 'pull-indicator';
+  el.textContent = '↓';
+  page.appendChild(el);
+  return el;
+}
+
+// ===== COLLAPSE TOGGLE =====
+function toggleCollapse(labelEl) {
+  const chevron = labelEl.querySelector('.chevron');
+  const body = labelEl.nextElementSibling;
+  if (!body || !body.classList.contains('collapse-body')) return;
+  const isOpen = !body.classList.contains('closed');
+  if (isOpen) {
+    body.classList.add('closed');
+    if (chevron) chevron.textContent = '▶';
+  } else {
+    body.classList.remove('closed');
+    if (chevron) chevron.textContent = '▼';
+  }
+}
+
+// ===== ANIMATED TOTAL UPDATE =====
+const origUpdateTotal = updateTotal;
+updateTotal = function() {
+  const gt = document.getElementById('grandTotal');
+  const oldVal = parseInt(gt.textContent.replace(/[^0-9]/g,'')) || 0;
+  origUpdateTotal();
+  const newVal = parseInt(gt.textContent.replace(/[^0-9]/g,'')) || 0;
+  if (oldVal !== newVal) animateCounter(gt, newVal);
+};
 
 // ===== INIT =====
 updateTotal();
